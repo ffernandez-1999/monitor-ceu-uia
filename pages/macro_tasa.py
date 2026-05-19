@@ -7,6 +7,7 @@ import textwrap
 import streamlit.components.v1 as components
 from services.macro_data import get_monetaria_serie
 from ui.common import safe_pct   # 👈 ESTA LÍNEA
+from services.macro_data import get_calidad_cartera_long
 
 
 # ============================================================
@@ -885,3 +886,29 @@ def render_macro_tasa(go_to):
             "</div>",
             unsafe_allow_html=True,
         )
+
+    # ============================================================
+    # TEST — Calidad de cartera BCRA
+    # ============================================================
+    
+    st.divider()
+    
+    st.subheader("TEST — Calidad de cartera")
+    
+    cartera = get_calidad_cartera_long()
+    
+    st.write("Shape:", cartera.shape)
+    
+    st.dataframe(
+        cartera.tail(30),
+        use_container_width=True,
+    )
+    
+    st.write("Agentes/conceptos disponibles:")
+    
+    st.dataframe(
+        cartera.groupby("agente")["concepto"]
+        .unique()
+        .reset_index(),
+        use_container_width=True,
+    )
