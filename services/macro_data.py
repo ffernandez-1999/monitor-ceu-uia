@@ -833,11 +833,34 @@ def get_calidad_cartera_long() -> pd.DataFrame:
     )
 
     try:
-        r = requests.get(url, timeout=60, verify=False)
-        r.raise_for_status()
+        last_err = None
+        content = None
+
+        for _ in range(3):
+            try:
+                r = requests.get(
+                    url,
+                    timeout=90,
+                    verify=False,
+                    headers={"User-Agent": "Mozilla/5.0"},
+                )
+                r.raise_for_status()
+
+                content = r.content
+
+                # Evita leer un XLSX descargado a medias
+                if content and len(content) > 500_000:
+                    break
+
+            except Exception as e:
+                last_err = e
+                content = None
+
+        if content is None:
+            raise RuntimeError(f"No se pudo descargar InfBanc_Anexo.xlsx: {last_err}")
 
         raw = pd.read_excel(
-            BytesIO(r.content),
+            BytesIO(content),
             sheet_name="Calidad de Cartera (por líneas)",
             header=None,
             engine="openpyxl",
