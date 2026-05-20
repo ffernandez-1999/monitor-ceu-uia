@@ -909,7 +909,6 @@ def render_macro_pbi_emae(go_to):
                         textposition="outside",
                         texttemplate="%{text}",
                         cliponaxis=False,
-                        customdata=y_plain,
                         hovertemplate="%{customdata}<br>%{x:.1f}%<extra></extra>",
                         name="",
                     )
