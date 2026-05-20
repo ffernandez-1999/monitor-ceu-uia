@@ -385,21 +385,30 @@ def render_macro_pbi_emae(go_to):
         st.markdown("<div class='fx-panel-gap'></div>", unsafe_allow_html=True)
 
         # =========================
-        # Controles: solo una columna activa
+        # Controles
         # =========================
+        if "act_niveles" not in st.session_state:
+            st.session_state["act_niveles"] = ["EMAE desestacionalizado", "EMAE tendencia-ciclo"]
+        
         c1, c2 = st.columns(2, gap="large")
-
+        
         with c1:
-            st.markdown("<div class='fx-panel-title'>Seleccioná la serie adicional</div>", unsafe_allow_html=True)
+            st.markdown("<div class='fx-panel-title'>Seleccioná las series de nivel</div>", unsafe_allow_html=True)
+            st.multiselect(
+                "",
+                options=["EMAE desestacionalizado", "EMAE tendencia-ciclo", "EMAE original"],
+                key="act_niveles",
+                label_visibility="collapsed",
+            )
+        
+        with c2:
+            st.markdown("<div class='fx-panel-title'>Seleccioná la variación</div>", unsafe_allow_html=True)
             st.selectbox(
                 "",
-                ["Variación mensual", "Variación anual", "Serie original"],
+                ["Variación mensual", "Variación anual", "Ninguna"],
                 key="act_medida",
                 label_visibility="collapsed",
             )
-
-        with c2:
-            st.markdown("&nbsp;", unsafe_allow_html=True)
 
         # =========================
         # Rango de fechas
@@ -482,22 +491,56 @@ def render_macro_pbi_emae(go_to):
             secondary_y=False,
         )
 
-        # Línea base: tendencia-ciclo
-        fig.add_trace(
-            go.Scatter(
-                x=dfp["FechaLabel"],
-                y=dfp["Trend"],
-                mode="lines",
-                name="EMAE tendencia-ciclo",
-                customdata=[_num_es(v, 1) for v in dfp["Trend"]],
-                hovertemplate="%{fullData.name}: %{customdata}<extra></extra>",
-                line=dict(width=3),
-            ),
-            secondary_y=False,
-        )
-
+        niveles_sel = st.session_state.get("act_niveles", [])
+        
+        if not niveles_sel:
+            st.warning("Seleccioná al menos una serie de nivel.")
+            return
+        
+        # Series de nivel seleccionables
+        if "EMAE desestacionalizado" in niveles_sel:
+            fig.add_trace(
+                go.Scatter(
+                    x=dfp["FechaLabel"],
+                    y=dfp["SA"],
+                    mode="lines+markers",
+                    name="EMAE desestacionalizado",
+                    customdata=[_num_es(v, 1) for v in dfp["SA"]],
+                    hovertemplate="%{fullData.name}: %{customdata}<extra></extra>",
+                ),
+                secondary_y=False,
+            )
+        
+        if "EMAE tendencia-ciclo" in niveles_sel:
+            fig.add_trace(
+                go.Scatter(
+                    x=dfp["FechaLabel"],
+                    y=dfp["Trend"],
+                    mode="lines",
+                    name="EMAE tendencia-ciclo",
+                    customdata=[_num_es(v, 1) for v in dfp["Trend"]],
+                    hovertemplate="%{fullData.name}: %{customdata}<extra></extra>",
+                    line=dict(width=3),
+                ),
+                secondary_y=False,
+            )
+        
+        if "EMAE original" in niveles_sel:
+            fig.add_trace(
+                go.Scatter(
+                    x=dfp["FechaLabel"],
+                    y=dfp["Original"],
+                    mode="lines+markers",
+                    name="EMAE original",
+                    customdata=[_num_es(v, 1) for v in dfp["Original"]],
+                    hovertemplate="%{fullData.name}: %{customdata}<extra></extra>",
+                ),
+                secondary_y=False,
+            )
+        
+        # Serie adicional en eje derecho
         y2 = pd.Series(dtype=float)
-
+        
         if medida == "Variación mensual":
             bar = dfp.dropna(subset=["MoM"]).copy()
             if not bar.empty:
@@ -513,7 +556,7 @@ def render_macro_pbi_emae(go_to):
                     secondary_y=True,
                 )
                 y2 = bar["MoM"]
-
+        
         elif medida == "Variación anual":
             bar = dfp.dropna(subset=["YoY"]).copy()
             if not bar.empty:
@@ -529,20 +572,6 @@ def render_macro_pbi_emae(go_to):
                     secondary_y=True,
                 )
                 y2 = bar["YoY"]
-
-        elif medida == "Serie original":
-            fig.add_trace(
-                go.Scatter(
-                    x=dfp["FechaLabel"],
-                    y=dfp["Original"],
-                    mode="lines+markers",
-                    name="EMAE original",
-                    customdata=[_num_es(v, 1) for v in dfp["Original"]],
-                    hovertemplate="%{fullData.name}: %{customdata}<extra></extra>",
-                ),
-                secondary_y=False,
-            )
-
         # eje X: mostrar solo años
         tick_df = dfp[dfp["Date"].dt.month == 1].copy()
 
