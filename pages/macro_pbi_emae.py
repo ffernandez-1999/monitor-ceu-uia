@@ -5,16 +5,10 @@ import numpy as np
 import random
 import textwrap
 import streamlit.components.v1 as components
-from services.macro_data import get_emae_sectores_long
+from plotly.subplots import make_subplots
 from services.macro_data import (
-    get_emae_original,
-    get_emae_deseasonalizado,
-    get_isac_original,
-    get_isac_deseasonalizado,
-    get_ipi_manuf_original,
-    get_ipi_manuf_deseasonalizado,
-    get_ipi_minero_original,
-    get_ipi_minero_deseasonalizado,
+    get_emae_excel_full,
+    get_emae_sectores_long,
 )
 
 # ============================================================
