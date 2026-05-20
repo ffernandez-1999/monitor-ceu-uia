@@ -611,7 +611,6 @@ def render_macro_pbi_emae(go_to):
             hoverformat="%b %Y"
         )
         
-        fig.update_layout(locale="es")
                
         
         st.plotly_chart(
