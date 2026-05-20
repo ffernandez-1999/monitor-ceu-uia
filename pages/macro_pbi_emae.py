@@ -529,7 +529,10 @@ def render_macro_pbi_emae(go_to):
             5:"may",6:"jun",7:"jul",8:"ago",
             9:"sep",10:"oct",11:"nov",12:"dic"
         }
-        
+
+        def _fecha_es(d):
+            d = pd.Timestamp(d)
+            return f"{MESES_ES[d.month]}-{str(d.year)[2:]}"
         st.markdown("<div class='fx-panel-title'>Rango de fechas</div>", unsafe_allow_html=True)
         
         start_d, end_d = st.select_slider(
@@ -562,6 +565,8 @@ def render_macro_pbi_emae(go_to):
                             y=lvl["Value"],
                             mode="lines+markers",
                             name=f"{vname} (s.e.)",
+                            customdata=[_fecha_es(d) for d in lvl["Date"]],
+                            hovertemplate="%{customdata}<br>%{fullData.name}: %{y:.2f}<extra></extra>",
                         )
                     )
                     fig.update_yaxes(title="Índice")
@@ -605,13 +610,15 @@ def render_macro_pbi_emae(go_to):
         # Aire a la derecha
         x_max = pd.Timestamp(end_ts) + pd.Timedelta(days=10)
 
+        tick_vals = pd.date_range(start_ts, end_ts, freq="YS")
+        
         fig.update_xaxes(
             range=[pd.Timestamp(start_ts), x_max],
-            tickformat="%b-%y",
-            hoverformat="%b %Y"
+            tickmode="array",
+            tickvals=tick_vals,
+            ticktext=[_fecha_es(d) for d in tick_vals],
         )
-        
-               
+                       
         
         st.plotly_chart(
             fig,
@@ -902,6 +909,7 @@ def render_macro_pbi_emae(go_to):
                         textposition="outside",
                         texttemplate="%{text}",
                         cliponaxis=False,
+                        customdata=y_plain,
                         hovertemplate="%{customdata}<br>%{x:.1f}%<extra></extra>",
                         name="",
                     )
